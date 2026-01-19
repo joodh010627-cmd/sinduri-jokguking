@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta property="og:title" content="신두리 족구왕: 더 레전드">
+    <meta property="og:description" content="전설의 족구 대결이 시작된다!">
+    <meta property="og:image" content="https://postimg.cc/BtcL9fzq">
+</head>
+<head>
+    <meta charset="UTF-8">
+    <title>신두리 족구왕: 더 레전드 (Perfect Save)</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #87CEEB;
+            flex-direction: column;
+            font-family: 'Gungsuh', 'GungsuhChe', serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-family: 'Gungsuh', 'GungsuhChe', serif;
+            background-color: #8B0000;
+            color: white;
+            border: 3px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
+            transition: 0.1s;
+            margin-top: 30px;
+        }
+        button:hover { background-color: #a00000; }
+
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0,0,0,0.85);
+            z-index: 10;
+            color: white;
+        }
+
+        #mainScreen {
+            display: flex;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://img.freepik.com/free-photo/beach-sea_1339-4009.jpg?w=1380');
+            background-size: cover;
+        }
+
+        #title {
+            font-size: 70px;
+            color: yellow;
+            text-shadow: 5px 5px 0 #000;
+            margin-bottom: 40px;
+            font-weight: 900;
+        }
+
+        .info-container { display: flex; gap: 50px; margin-bottom: 20px; }
+        .info-box {
+            background: rgba(0,0,0,0.6); border: 2px solid white; padding: 20px;
+            border-radius: 10px; width: 350px; text-align: left;
+        }
+        .info-box h3 { color: #00ffff; text-align: center; margin-top: 0; border-bottom: 1px solid white; padding-bottom: 10px; }
+        .tip { font-size: 15px; color: #ffcc00; margin-top: 5px; display: block; line-height: 1.4; }
+
+        #gameScreenContainer { position: relative; display: none; flex-direction: column; align-items: center; margin-top: 20px; }
+        #gameHeader { display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; }
+        #inGameTitle { font-size: 40px; margin: 0; color: white; text-shadow: 2px 2px 0 #000; }
+        #scoreboard {
+            font-size: 32px; font-weight: bold; color: #000; background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 40px; border-radius: 50px; border: 3px solid black; margin-top: 5px;
+        }
+        canvas {
+            display: block; background: linear-gradient(to bottom, #87CEEB 0%, #f0e68c 70%);
+            border-bottom: 15px solid #c2a47c; border: 5px solid white; box-shadow: 0 15px 30px rgba(0,0,0,0.5); border-radius: 10px;
+        }
+        #gameOverScreen h1 { font-size: 50px; margin-bottom: 20px; }
+        #winnerText { font-size: 80px; color: yellow; text-shadow: 5px 5px 0 #000; margin-bottom: 30px; font-weight: bold; }
+        .key { background: #fff; color: #000; padding: 0 5px; border-radius: 3px; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+    <div id="mainScreen" class="screen">
+        <div id="title">신두리의 족구왕을 가려라!</div>
+        <div class="info-container">
+            <div class="info-box">
+                <h3>🎮 조작 방법</h3>
+                <p><b>이동:</b> <span class="key">⬅️</span> <span class="key">➡️</span> | <b>점프:</b> <span class="key">⬆️</span></p>
+                <p><b>🔥 불꽃 슛:</b> 게이지 MAX + <span class="key">Space</span></p>
+                <span class="tip">💡 팁: 네트 근처 높이 떴을 때 사용하세요!</span>
+                <p style="margin-top: 15px;"><b>🛡️ 슈퍼 세이브:</b> <span class="key">Space</span></p>
+                <span class="tip">💡 팁: 상대가 불꽃 슛을 위해 멈춰있을 때<br>스페이스 바를 누르세요!</span>
+            </div>
+            <div class="info-box">
+                <h3>📜 경기 규칙</h3>
+                <p>✅ <b>11점</b> 선취 시 승리</p>
+                <p>✅ <b>3터치 룰:</b> 3번 안에 상대 진영으로 넘겨야 함 (4회 터치 시 아웃)</p>
+            </div>
+        </div>
+        <button onclick="startGame()">게임 시작</button>
+    </div>
+
+    <div id="gameScreenContainer">
+        <div id="gameHeader">
+            <h2 id="inGameTitle">신두리 족구왕</h2>
+            <div id="scoreboard">김태훈 0 : 0 심호지</div>
+        </div>
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+    </div>
+
+    <div id="gameOverScreen" class="screen">
+        <h1>신두리의 족구왕은</h1>
+        <div id="winnerText">???</div>
+        <h1>입니다.</h1>
+        <button onclick="restartGame()">다시 도전하기</button>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreboard = document.getElementById('scoreboard');
+    const mainScreen = document.getElementById('mainScreen');
+    const gameScreenContainer = document.getElementById('gameScreenContainer');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const winnerText = document.getElementById('winnerText');
+
+    const GROUND_Y = canvas.height - 60; 
+    const GRAVITY = 0.45;
+    const FRICTION = 0.98;
+    const PLAYER_SPEED = 6;
+    const JUMP_POWER = -11;
+    const BOUNCE_FORCE = -11;
+    const MAX_BALL_SPEED = 12;
+    const SPIKE_SPEED_Y = 22; 
+    const SPIKE_SPEED_X = 16;
+    const NET_X = canvas.width / 2;
+    const NET_H = 100;
+    const NET_W = 10;
+    const MAX_SCORE = 11;
+    
+    let scoreTaehoon = 0;
+    let scoreHoji = 0;
+    let isGameRunning = false;
+    let freezeMode = false; 
+    
+    let roundWinnerText = ""; 
+    let isRoundDelay = false;
+    let leftTouchCount = 0;
+    let rightTouchCount = 0;
+    
+    const keys = { ArrowRight: false, ArrowLeft: false, ArrowUp: false, Space: false };
+    document.addEventListener('keydown', (e) => { 
+        if(e.code === 'Space') keys.Space = true;
+        keys[e.code] = true; 
+    });
+    document.addEventListener('keyup', (e) => { 
+        if(e.code === 'Space') keys.Space = false;
+        keys[e.code] = false; 
+    });
+
+    // === 🏐 클래스 ===
+
+    class Ball {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.radius = 18;
+            this.vx = 0;
+            this.vy = 0;
+            this.isSpiked = false;
+            this.lastHitTimer = 0; 
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.isSpiked ? '#ff3300' : 'white';
+            ctx.fill();
+            
+            if (!this.isSpiked) {
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - this.radius);
+                ctx.quadraticCurveTo(this.x + 10, this.y, this.x, this.y + this.radius);
+                ctx.moveTo(this.x - this.radius, this.y);
+                ctx.quadraticCurveTo(this.x, this.y - 10, this.x + this.radius, this.y);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = "yellow";
+                ctx.font = "bold 24px 'Gungsuh'";
+                ctx.fillText("🔥", this.x - 12, this.y + 8);
+            }
+            ctx.closePath();
+        }
+
+        update() {
+            if (freezeMode || isRoundDelay) return;
+            if(this.lastHitTimer > 0) this.lastHitTimer--;
+
+            this.vy += GRAVITY;
+            this.vx *= FRICTION;
+            this.x += this.vx;
+            this.y += this.vy;
+
+            if (this.x > NET_X) leftTouchCount = 0;
+            else rightTouchCount = 0;
+
+            if (!this.isSpiked) {
+                if (this.vx > MAX_BALL_SPEED) this.vx = MAX_BALL_SPEED;
+                if (this.vx < -MAX_BALL_SPEED) this.vx = -MAX_BALL_SPEED;
+            }
+
+            if (this.x - this.radius < 0) { this.x = this.radius; this.vx *= -0.8; }
+            if (this.x + this.radius > canvas.width) { this.x = canvas.width - this.radius; this.vx *= -0.8; }
+            if (this.y - this.radius < 0) { this.y = this.radius; this.vy *= -0.6; }
+
+            if (this.x + this.radius > NET_X - NET_W/2 && this.x - this.radius < NET_X + NET_W/2) {
+                if (this.y + this.radius > GROUND_Y - NET_H) {
+                    if (this.y - this.radius < GROUND_Y - NET_H && this.vy > 0) {
+                        this.vy *= -0.8;
+                        this.y = GROUND_Y - NET_H - this.radius;
+                    } else {
+                        this.vx *= -1;
+                        if (this.x < NET_X) this.x = NET_X - NET_W/2 - this.radius - 1;
+                        else this.x = NET_X + NET_W/2 + this.radius + 1;
+                    }
+                }
+            }
+            if (this.y + this.radius > GROUND_Y - 5) this.isSpiked = false;
+        }
+    }
+
+    class Player {
+        constructor(x, color, isAI = false) {
+            this.width = 40;
+            this.height = 70; 
+            this.x = x;
+            this.y = GROUND_Y - this.height;
+            this.vx = 0;
+            this.vy = 0;
+            this.color = color;
+            this.isJumping = false;
+            this.isAI = isAI;
+            this.gauge = 0;
+            this.actionState = 'normal'; 
+            this.actionTimer = 0; 
+        }
+
+        draw() {
+            ctx.save();
+            let drawX = this.x;
+            let drawY = this.y;
+            let rotation = 0;
+
+            if (this.actionState === 'spike_pose') {
+                drawX += this.width/2; drawY += this.height/2; rotation = Math.PI; 
+            } else if (this.actionState === 'slide') {
+                drawX += this.width/2; drawY += this.height;
+                rotation = this.isAI ? Math.PI/2 : -Math.PI/2;
+                ctx.translate(drawX, drawY);
+                ctx.rotate(rotation);
+                ctx.translate(-drawX, -drawY);
+                drawY += 20; rotation = 0; 
+            }
+
+            if (rotation !== 0) {
+                ctx.translate(drawX, drawY);
+                ctx.rotate(rotation);
+                ctx.translate(-drawX, -drawY);
+            }
+
+            if (this.actionState === 'spike_ready') {
+                ctx.shadowBlur = 30; ctx.shadowColor = 'red';
+            }
+
+            if (this.actionState !== 'spike_pose') { 
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width/2, GROUND_Y, this.width/2, 5, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.isAI || this.actionState!=='spike_pose' ? this.x : drawX - this.width/2, 
+                         this.isAI || this.actionState!=='spike_pose' ? this.y : drawY - this.height/2, 
+                         this.width, this.height);
+            
+            ctx.fillStyle = '#ffccaa';
+            let headX = this.x + this.width/2;
+            let headY = this.y - 10;
+            if(this.actionState === 'spike_pose'){ headX = drawX; headY = drawY + this.height/2 + 10; }
+            ctx.beginPath();
+            if(rotation !== 0 && this.actionState === 'spike_pose') {
+                ctx.arc(this.x + this.width/2, this.y - 10, 16, 0, Math.PI*2); 
+            } else if (this.actionState !== 'slide') {
+                 ctx.arc(headX, headY, 16, 0, Math.PI*2);
+            }
+            ctx.fill();
+            ctx.restore();
+        }
+
+        update(ball) {
+            if (freezeMode || isRoundDelay) return;
+
+            if (this.actionTimer > 0) {
+                this.actionTimer--;
+                if (this.actionTimer === 0 && this.actionState === 'slide') this.actionState = 'normal';
+            }
+
+            this.vy += GRAVITY;
+            this.x += this.vx;
+            this.y += this.vy;
+
+            if (this.y + this.height > GROUND_Y) {
+                this.y = GROUND_Y - this.height;
+                this.vy = 0;
+                this.isJumping = false;
+            }
+
+            if (this.isAI) this.aiBehavior(ball);
+            else this.handleInput(ball);
+
+            if (this.x < 0) this.x = 0;
+            if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+
+            if (!this.isAI && this.x + this.width > NET_X) {
+                this.x = NET_X - this.width; this.vx = 0; 
+            }
+            if (this.isAI && this.x < NET_X) {
+                this.x = NET_X; this.vx = 0;
+            }
+        }
+
+        handleInput(ball) {
+            if (this.actionState === 'slide') return; 
+            if (this.actionState === 'spike_pose') return; 
+
+            this.vx = 0;
+            if (keys.ArrowLeft) this.vx = -PLAYER_SPEED;
+            if (keys.ArrowRight) this.vx = PLAYER_SPEED;
+            if (keys.ArrowUp && !this.isJumping) {
+                this.vy = JUMP_POWER;
+                this.isJumping = true;
+            }
+            if (this.x + this.width > NET_X) this.x = NET_X - this.width;
+
+            if (keys.Space) {
+                if (this.gauge >= 100 && this.actionState === 'normal') {
+                    this.actionState = 'spike_ready'; 
+                }
+                
+                // === 🔥 개선된 슈퍼 세이브 로직 🔥 ===
+                if ((freezeMode || ball.isSpiked) && this.actionState === 'normal' && !this.isJumping) {
+                     this.actionState = 'slide';
+                     this.actionTimer = 45; // 넉넉하게
+                     
+                     // 1. 공이 날아오는 속도 예측
+                     let incomingVx = ball.vx;
+                     if(freezeMode) { // 아직 발사 전이면 상수로 예측
+                        // 김태훈(Player) 기준: AI가 오른쪽에서 쏘므로 무조건 음수 속도
+                        incomingVx = -SPIKE_SPEED_X; 
+                     }
+
+                     // 2. 공이 바닥에 닿기까지 걸리는 시간 계산
+                     // 거리 = 속도 * 시간 => 시간 = 거리 / 속도 (X축 기준은 부정확)
+                     // Y축 기준: H = 0.5 * g * t^2 + v0 * t (복잡함)
+                     // 근사치: 현재 공 높이와 수직 속도로 남은 시간 추정
+                     // 하지만 freezeMode일 땐 ball.vy가 0이므로 SPIKE_SPEED_Y 사용
+                     let impactTime = 0;
+                     if (freezeMode) {
+                        impactTime = (GROUND_Y - 100) / SPIKE_SPEED_Y;
+                     } else {
+                        // 날아오는 중일 때
+                        let remainingHeight = GROUND_Y - ball.y;
+                        let currentVy = ball.vy > 0 ? ball.vy : 5; // 떨어지는 속도 보정
+                        impactTime = remainingHeight / currentVy;
+                     }
+
+                     // 3. 낙하 예상 X 좌표
+                     let targetX = ball.x + (incomingVx * impactTime);
+
+                     // 4. 벽 튕김 보정 (공이 0보다 뒤로 갈 경우)
+                     if (targetX < 0) {
+                         targetX = Math.abs(targetX); // 튕겨서 돌아오는 위치 대략 예측
+                     }
+
+                     // 5. 네트 넘지 않게 Clamp
+                     if (targetX > NET_X - this.width) targetX = NET_X - this.width;
+                     
+                     // 6. 광속 이동 속도 설정 (5프레임 안에 도달)
+                     this.vx = (targetX - this.x) / 5;
+                     
+                     this.gauge += 20; 
+                     if(this.gauge > 100) this.gauge = 100;
+                }
+            }
+        }
+
+        aiBehavior(ball) {
+            let targetX = ball.x;
+            let panicMode = (this.isAI && rightTouchCount >= 2);
+            let distToNet = Math.abs(this.x - NET_X);
+            
+            if (this.gauge >= 100 && this.actionState === 'normal') {
+                 if (ball.x > NET_X && distToNet < 150) this.actionState = 'spike_ready';
+            }
+
+            if (ball.isSpiked && ball.vx > 0 && !this.isJumping && this.actionState === 'normal') {
+                if (Math.random() < 0.6) { 
+                    this.actionState = 'slide';
+                    this.actionTimer = 40;
+                    let safeTargetX = ball.x;
+                    if(safeTargetX < NET_X) safeTargetX = NET_X; 
+                    this.vx = (safeTargetX - this.x) * 0.3;
+                }
+            }
+
+            if (ball.x > NET_X) {
+                if (panicMode) {
+                     if (this.x < ball.x) this.vx = PLAYER_SPEED; 
+                     else this.vx = -PLAYER_SPEED * 0.5;
+                } else {
+                    if (this.x + this.width/2 < targetX - 10) this.vx = PLAYER_SPEED * 0.7;
+                    else if (this.x + this.width/2 > targetX + 10) this.vx = -PLAYER_SPEED * 0.7;
+                    else this.vx = 0;
+                }
+                if (Math.abs(this.x - ball.x) < 50 && ball.y > this.y - 50 && !this.isJumping) {
+                    if(ball.y > GROUND_Y - 150) {
+                        this.vy = JUMP_POWER * 0.9;
+                        this.isJumping = true;
+                    }
+                }
+            } else {
+                let standbyX = canvas.width * 0.75;
+                if (this.x < standbyX - 20) this.vx = PLAYER_SPEED * 0.3;
+                else if (this.x > standbyX + 20) this.vx = -PLAYER_SPEED * 0.3;
+                else this.vx = 0;
+            }
+            if (this.x < NET_X) this.x = NET_X;
+        }
+    }
+
+
+    // === 🎮 메인 로직 ===
+
+    let ball = new Ball(200, 200);
+    let player1 = new Player(100, '#0044ff'); 
+    let player2 = new Player(650, '#ff4400', true); 
+
+    function triggerSpikeCinematic(attacker) {
+        freezeMode = true;
+        attacker.actionState = 'spike_pose'; 
+        attacker.gauge = 0; 
+        
+        ball.x = attacker.x + attacker.width/2 + (attacker.isAI ? -20 : 20);
+        ball.y = 100; 
+        ball.vx = 0; ball.vy = 0;
+        
+        attacker.y = 100; 
+        attacker.vy = 0;
+        attacker.isJumping = true;
+
+        setTimeout(() => {
+            freezeMode = false;
+            attacker.actionState = 'normal'; 
+            ball.isSpiked = true;
+            ball.vy = SPIKE_SPEED_Y; 
+            ball.vx = attacker.isAI ? -SPIKE_SPEED_X : SPIKE_SPEED_X;
+        }, 300);
+    }
+
+    function checkCollision(ball, player) {
+        let testX = ball.x;
+        let testY = ball.y;
+        if (ball.x < player.x) testX = player.x;
+        else if (ball.x > player.x + player.width) testX = player.x + player.width;
+        if (ball.y < player.y) testY = player.y;
+        else if (ball.y > player.y + player.height) testY = player.y + player.height;
+        let distX = ball.x - testX;
+        let distY = ball.y - testY;
+        let distance = Math.sqrt((distX * distX) + (distY * distY));
+
+        // 🔥 히트박스 보정 (슈퍼 세이브 시) 🔥
+        // 슬라이딩 중일 땐 충돌 반경을 2배로 늘려서 '자석'처럼 막게 함
+        let hitRadius = ball.radius;
+        if (player.actionState === 'slide') hitRadius = ball.radius + 30; // 30px 더 넓게
+
+        if (distance <= hitRadius) {
+            if (ball.lastHitTimer > 0) return;
+            ball.lastHitTimer = 10; 
+
+            if (player.x < NET_X) leftTouchCount++; else rightTouchCount++;
+
+            if ((player.x < NET_X && leftTouchCount > 3)) { handleScore('hoji'); return; }
+            if ((player.x > NET_X && rightTouchCount > 3)) { handleScore('taehoon'); return; }
+
+            if (player.gauge < 100) player.gauge += 10;
+            if (player.gauge > 100) player.gauge = 100;
+
+            if (player.actionState === 'spike_ready') { triggerSpikeCinematic(player); return; }
+
+            if (player.actionState === 'slide') {
+                ball.vy = -18; // 높이 띄움
+                ball.vx = player.isAI ? -4 : 4; // 앞으로 보냄
+                ball.isSpiked = false;
+                player.gauge += 20; 
+                if(player.gauge > 100) player.gauge = 100;
+            } 
+            else {
+                ball.vy = BOUNCE_FORCE;
+                let centerDiff = ball.x - (player.x + player.width/2);
+                ball.vx = centerDiff * 0.35;
+                if (player.isAI && rightTouchCount >= 2) ball.vx -= 4; 
+                else if (player.isAI) ball.vx -= 2; else ball.vx += 2;
+                ball.isSpiked = false;
+            }
+        }
+    }
+
+    function drawGauges() {
+        drawSingleGauge(20, player1.gauge);
+        drawSingleGauge(canvas.width - 40, player2.gauge);
+    }
+
+    function drawSingleGauge(x, value) {
+        ctx.fillStyle = '#444';
+        ctx.fillRect(x, 100, 20, 200);
+        let height = (value / 100) * 200;
+        if (value >= 100) ctx.fillStyle = `hsl(${Date.now() % 360}, 100%, 50%)`;
+        else ctx.fillStyle = 'yellow';
+        ctx.fillRect(x, 100 + (200 - height), 20, height);
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+        ctx.strokeRect(x, 100, 20, 200);
+        ctx.fillStyle = 'black';
+        ctx.font = "bold 15px 'Gungsuh'";
+        ctx.fillText(value >= 100 ? "MAX" : "", x - 5, 90);
+    }
+
+    function handleScore(winner) {
+        if (!isGameRunning || isRoundDelay) return;
+        isRoundDelay = true;
+        roundWinnerText = (winner === 'taehoon') ? "김태훈 승!" : "심호지 승!";
+        setTimeout(() => { resetGame(winner); }, 500); 
+    }
+
+    function resetGame(winner) {
+        isRoundDelay = false;
+        roundWinnerText = "";
+        if (winner === 'taehoon') scoreTaehoon++;
+        else if (winner === 'hoji') scoreHoji++;
+        
+        scoreboard.innerText = `김태훈 ${scoreTaehoon} : ${scoreHoji} 심호지`;
+
+        if (scoreTaehoon >= MAX_SCORE || scoreHoji >= MAX_SCORE) {
+            endGame(scoreTaehoon >= MAX_SCORE ? "김태훈" : "심호지"); return;
+        }
+
+        player1.actionState = 'normal'; player2.actionState = 'normal';
+        player1.isJumping = false; player2.isJumping = false;
+        leftTouchCount = 0; rightTouchCount = 0;
+        
+        if (winner === 'taehoon') {
+            ball.x = 150; ball.y = 150;
+            player1.x = 100; player1.y = GROUND_Y - player1.height;
+            player2.x = 650; ball.vx = 2; ball.vy = -5;
+        } else {
+            ball.x = 650; ball.y = 150;
+            player2.x = 700; player1.x = 100;
+            ball.vx = -3; ball.vy = -5;
+        }
+        ball.isSpiked = false; ball.lastHitTimer = 0; freezeMode = false;
+    }
+
+    function startGame() {
+        mainScreen.style.display = 'none';
+        gameScreenContainer.style.display = 'flex';
+        gameOverScreen.style.display = 'none';
+        scoreTaehoon = 0; scoreHoji = 0;
+        scoreboard.innerText = `김태훈 0 : 0 심호지`;
+        player1.gauge = 0; player2.gauge = 0;
+        isGameRunning = true;
+        resetGame(''); gameLoop();
+    }
+
+    function endGame(winnerName) {
+        isGameRunning = false;
+        gameScreenContainer.style.display = 'none';
+        gameOverScreen.style.display = 'flex';
+        winnerText.innerText = winnerName;
+    }
+
+    window.restartGame = function() { startGame(); };
+
+    function gameLoop() {
+        if (!isGameRunning) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#d2b48c'; ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y); 
+        ctx.fillStyle = '#555'; ctx.fillRect(NET_X - 5, GROUND_Y - NET_H, 10, NET_H);
+        drawGauges();
+
+        if (isRoundDelay) {
+            ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.font = "bold 60px 'Gungsuh'";
+            ctx.textAlign = "center"; ctx.fillText(roundWinnerText, canvas.width/2, canvas.height/2);
+            requestAnimationFrame(gameLoop); return; 
+        }
+
+        player1.update(ball); player1.draw();
+        player2.update(ball); player2.draw();
+        ball.update(); ball.draw();
+
+        if (freezeMode) {
+            ctx.fillStyle = "yellow"; ctx.font = "bold 80px 'Gungsuh'";
+            ctx.textAlign = "center"; ctx.strokeStyle = "black"; ctx.lineWidth = 3;
+            ctx.fillText("SIUUUUUU!", canvas.width/2, canvas.height/2);
+            ctx.strokeText("SIUUUUUU!", canvas.width/2, canvas.height/2);
+        }
+
+        if(!freezeMode) {
+            checkCollision(ball, player1); checkCollision(ball, player2);
+        }
+
+        if (ball.y + ball.radius > GROUND_Y) {
+            if (ball.x < NET_X) handleScore('hoji'); else handleScore('taehoon');
+        }
+        requestAnimationFrame(gameLoop);
+    }
+</script>
+</body>
+</html>
